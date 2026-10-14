@@ -14,11 +14,23 @@ This project serves as the foundation for bare-metal embedded programming, bypas
 
 ---
 
+## 📦 Hardware Components & Bill of Materials (BOM)
+
+| Item | Component Description | Quantity | Purpose |
+| :--- | :--- | :--- | :--- |
+| **1** | STM32F030C8T6 Development Board | 1 | Microcontroller core |
+| **2** | ST-LINK V2 Debugger / Programmer | 1 | For flashing and debugging code via SWD |
+| **3** | Standard LED (Any color) | 1 | Visual output indicator |
+| **4** | $220\,\Omega \text{ to } 1\text{ k}\Omega$ Resistor | 1 | Current limiter to protect the GPIO pin |
+| **5** | Breadboard & Jumper Wires | As needed | Circuit prototyping connections |
+
+---
+
 ## 🔌 Hardware Circuit Connections
 
 | Component | MCU Pin | Pin Name | External Circuit Connection | Behavior |
 | :--- | :--- | :--- | :--- | :--- |
-| **LED** | Pin 17 | **PA9** | Anode (+) $\rightarrow$ PA9 <br> Cathode (-) $\rightarrow$ $220\,\Omega\text{ to }1\text{ k}\Omega$ Resistor $\rightarrow$ **GND** | Blinks continuously (ON for ~300ms, OFF for ~300ms) |
+| **LED** | Pin 17 | **PA9** | Anode (+) $\rightarrow$ PA9 <br> Cathode (-) $\rightarrow$ Resistor $\rightarrow$ **GND** | Blinks continuously (ON for ~300ms, OFF for ~300ms) |
 | **Common Ground** | — | **GND** | Board Ground $\rightarrow$ Power Supply Ground | Common reference |
 
 ---
@@ -27,17 +39,17 @@ This project serves as the foundation for bare-metal embedded programming, bypas
 
 ### 1. Clock Enable (`RCC_AHBENR`)
 By default, internal clocks to all GPIO ports are disabled to save power. 
-* Bit 17 of `RCC_AHBENR` controls the clock for **GPIO Port A**. Setting `RCC_AHBENR |= (1 << 17)` turns on the hardware block so its registers can accept read/write instructions.
+- Bit 17 of `RCC_AHBENR` controls the clock for **GPIO Port A**. Setting `RCC_AHBENR |= (1 << 17)` turns on the hardware block so its registers can accept read/write instructions.
 
 ### 2. Pin Mode Configuration (`GPIOA_MODER`)
 Each GPIO pin has 2 bits in the `MODER` register controlling its behavior (00 = Input, 01 = Output, 10 = Alternate Function, 11 = Analog).
-* For **PA9**, bits 18 and 19 (`2 * 9`) are cleared and then set to `01` to configure it as a digital output.
+- For **PA9**, bits 18 and 19 (`2 * 9`) are cleared and then set to `01` to configure it as a digital output.
 
 ### 3. Efficient Pin Toggling (`GPIOA_BSRR`)
 Instead of reading, modifying, and writing back to the Output Data Register (`ODR`)—which can cause race conditions—the **Bit Set/Reset Register (`BSRR`)** allows single-cycle atomic writes:
-* **Writing to the upper 16 bits (Bits 16–31):** Resets the corresponding pin to **LOW**.
-* **Writing to the lower 16 bits (Bits 0–15):** Sets the corresponding pin to **HIGH**.
-* In the code, `PA9 LOW` is triggered by writing to bit index `9 + 16` (25), and `PA9 HIGH` is triggered by writing directly to bit `9`.
+- **Writing to the upper 16 bits (Bits 16–31):** Resets the corresponding pin to **LOW**.
+- **Writing to the lower 16 bits (Bits 0–15):** Sets the corresponding pin to **HIGH**.
+- In the code, `PA9 LOW` is triggered by writing to bit index `9 + 16` (25), and `PA9 HIGH` is triggered by writing directly to bit `9`.
 
 ---
 
@@ -45,6 +57,6 @@ Instead of reading, modifying, and writing back to the Output Data Register (`OD
 
 ```text
 01_gpio_blink/
-├── README.md      # Documentation and wiring guide (this file)
+├── README.md      # Documentation, BOM, and wiring guide (this file)
 └── src/
     └── main.c     # Bare-metal C source code
